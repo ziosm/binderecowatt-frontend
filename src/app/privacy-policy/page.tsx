@@ -104,7 +104,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-2xl font-semibold text-gray-800 pt-4">10. Titolare, Responsabile e Incaricati</h2>
             <p>Il Titolare del trattamento è {companyData.companyName}. L’elenco aggiornato dei responsabili e degli incaricati al trattamento è custodito presso la sede legale del Titolare del trattamento.</p>
             
-            <p class="mt-8"><em>Questa è una policy generica e dovrebbe essere revisionata da un consulente legale per assicurare la piena conformità con le normative vigenti e le specifiche necessità aziendali.</em></p>
+            <p className="mt-8">- C' l',Questa è una policy generica e dovrebbe essere revisionata da un consulente legale per assicurare la piena conformità con le normative vigenti e le specifiche necessità aziendali.</em></p>
           </div>
         </section>
       </main>
