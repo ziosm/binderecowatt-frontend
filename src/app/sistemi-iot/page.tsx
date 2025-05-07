@@ -91,7 +91,7 @@ export default function SistemiIoTPage() {
 
         <section className="py-10 bg-gray-100 rounded-lg shadow">
           <h2 className="text-3xl font-semibold text-center text-gray-800 mb-10">Galleria Immagini e Demo Interfacce</h2>
-          <div class="text-center text-gray-600">
+          <div className="text-center text-gray
             <p>Qui verranno inserite immagini di screenshot delle dashboard di monitoraggio e, se disponibile, una demo interattiva o un video che mostri la piattaforma in azione.</p>
             <div class="flex justify-center space-x-4 mt-6">
                 <div class="w-1/3 h-40 bg-gray-300 rounded flex items-center justify-center text-gray-500">Screenshot 1</div>
