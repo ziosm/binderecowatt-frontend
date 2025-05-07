@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import Image from 'next/image'; // Importa il componente Image
 
 export const metadata: Metadata = {
   title: 'Sistemi IoT per Monitoraggio Energetico - BinderEcowatt',
@@ -19,22 +20,7 @@ const companyData = {
 export default function SistemiIoTPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header */}
-      <header className="bg-green-700 text-white p-4 sticky top-0 z-50 shadow-md">
-        <div className="container mx-auto flex justify-between items-center">
-          <Link href="/" legacyBehavior><a className="text-3xl font-bold">{companyData.name}</a></Link>
-          <nav>
-            <Link href="/" legacyBehavior><a className="px-3 hover:text-green-300">Home</a></Link>
-            <Link href="/impianti-fotovoltaici" legacyBehavior><a className="px-3 hover:text-green-300">Impianti Fotovoltaici</a></Link>
-            <Link href="/sistemi-iot" legacyBehavior><a className="px-3 hover:text-green-300 font-semibold">Sistemi IoT</a></Link>
-            <Link href="/mappa-preventivi" legacyBehavior><a className="px-3 hover:text-green-300">Mappa Preventivi</a></Link>
-            <Link href="/manutenzione" legacyBehavior><a className="px-3 hover:text-green-300">Manutenzione</a></Link>
-            <Link href="/chi-siamo" legacyBehavior><a className="px-3 hover:text-green-300">Chi Siamo</a></Link>
-            <Link href="/blog" legacyBehavior><a className="px-3 hover:text-green-300">Blog</a></Link>
-            <Link href="/contatti" legacyBehavior><a className="px-3 hover:text-green-300">Contatti</a></Link>
-          </nav>
-        </div>
-      </header>
+      {/* Header è gestito dal RootLayout ora */}
 
       <main className="flex-grow container mx-auto px-4 py-8">
         <section className="py-12">
@@ -60,8 +46,9 @@ export default function SistemiIoTPage() {
                         <li>Integrazione con sistemi di domotica e gestione intelligente dell'energia.</li>
                     </ul>
                 </div>
-                {/* Immagine placeholder per dashboard IoT */}
-                <div className="w-full h-64 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-center p-4">Immagine/Schema Dashboard di Monitoraggio IoT</div>
+                <div className="w-full h-64 relative rounded overflow-hidden">
+                  <Image src="/placeholder-sistemi-iot.jpg" alt="Dashboard di Monitoraggio IoT" layout="fill" objectFit="contain" />
+                </div>
             </div>
           </div>
         </section>
@@ -91,12 +78,19 @@ export default function SistemiIoTPage() {
 
         <section className="py-10 bg-gray-100 rounded-lg shadow">
           <h2 className="text-3xl font-semibold text-center text-gray-800 mb-10">Galleria Immagini e Demo Interfacce</h2>
-          <div className="text-center text-gray
+          <div className="text-center text-gray-600">
             <p>Qui verranno inserite immagini di screenshot delle dashboard di monitoraggio e, se disponibile, una demo interattiva o un video che mostri la piattaforma in azione.</p>
-            <div class="flex justify-center space-x-4 mt-6">
-                <div class="w-1/3 h-40 bg-gray-300 rounded flex items-center justify-center text-gray-500">Screenshot 1</div>
-                <div class="w-1/3 h-40 bg-gray-300 rounded flex items-center justify-center text-gray-500">Screenshot 2</div>
-                <div class="w-1/3 h-40 bg-gray-300 rounded flex items-center justify-center text-gray-500">Video Demo</div>
+            <div className="flex flex-wrap justify-center space-x-4 mt-6">
+                <div className="w-full sm:w-1/2 md:w-1/3 h-48 relative rounded mb-4 overflow-hidden">
+                    <Image src="/placeholder-sistemi-iot.jpg" alt="Screenshot dashboard IoT 1" layout="fill" objectFit="cover" />
+                </div>
+                <div className="w-full sm:w-1/2 md:w-1/3 h-48 relative rounded mb-4 overflow-hidden">
+                     <Image src="/placeholder-blog-3.jpg" alt="Screenshot dashboard IoT 2" layout="fill" objectFit="cover" />
+                </div>
+                <div className="w-full sm:w-1/2 md:w-1/3 h-48 relative rounded mb-4 overflow-hidden bg-gray-300 flex items-center justify-center text-gray-500">
+                    {/* Placeholder per video o altra immagine */}
+                    Video Demo / Altra Immagine
+                </div>
             </div>
           </div>
         </section>
@@ -112,14 +106,12 @@ export default function SistemiIoTPage() {
               <summary className="font-semibold text-lg text-green-700">I miei dati sono al sicuro?</summary>
               <p className="mt-2 text-gray-600">La sicurezza e la privacy dei tuoi dati sono la nostra priorità. Utilizziamo protocolli di comunicazione sicuri e piattaforme conformi alle normative vigenti.</p>
             </details>
-            {/* Aggiungere altre FAQ specifiche per IoT */}
           </div>
         </section>
-
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8 text-center">
+      {/* Footer è gestito dal RootLayout ora */}
+       <footer className="bg-gray-800 text-white py-8 text-center mt-auto">
         <div className="container mx-auto">
           <p>&copy; {new Date().getFullYear()} {companyData.companyName} - P.IVA {companyData.vatNumber}</p>
           <p>{companyData.address}</p>
