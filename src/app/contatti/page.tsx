@@ -15,7 +15,9 @@ const companyData = {
 };
 
 export default function ContattiPage()  {
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
+  const [submitStatus, setSubmitStatus] = useState<
+    'idle' | 'pending' | 'success' | 'error'
+  >('idle');
   const [submitMessage, setSubmitMessage] = useState('');
 
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -38,15 +40,27 @@ export default function ContattiPage()  {
         setSubmitMessage('Messaggio inviato con successo! Grazie.');
         (event.target as HTMLFormElement).reset();
       } else {
-        const errorData = await response.json().catch(() => ({ message: "Errore sconosciuto dal server." }));
-        console.error("Errore invio form (risposta API non OK):", response.status, errorData);
+        let errorMessage = response.statusText; // Default a statusText
+        try {
+          const errorData = await response.json();
+          // Controlla se errorData è un oggetto e ha una proprietà message di tipo stringa
+          if (typeof errorData === 'object' && errorData !== null && typeof (errorData as any).message === 'string') {
+            errorMessage = (errorData as any).message;
+          }
+          console.error("Errore invio form (risposta API non OK):", response.status, errorData);
+        } catch (jsonError) {
+          // Se response.json() fallisce o non è JSON, usa statusText come fallback
+          console.error("Errore nel parsing JSON della risposta di errore:", jsonError);
+        }
         setSubmitStatus('error');
-        setSubmitMessage(`Si è verificato un errore: ${errorData.message || response.statusText}. Riprova più tardi.`);
+        setSubmitMessage(`Si è verificato un errore: ${errorMessage}. Riprova più tardi.`);
       }
     } catch (error) {
       console.error("Errore invio form (catch globale):", error);
       setSubmitStatus('error');
-      setSubmitMessage('Si è verificato un errore di rete o di configurazione. Riprova più tardi.');
+      setSubmitMessage(
+        'Si è verificato un errore di rete o di configurazione. Riprova più tardi.'
+      );
     }
   };
 
