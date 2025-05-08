@@ -33,7 +33,9 @@ export default function ContattiPage()  {
     setSubmissionStatus('invio');
     const formData = new FormData(event.currentTarget);
 
-    // Importante: l'action del form nel JSX punterà a questo script,
+    // const response = await fetch("/netlify-forms-declarations.html", { // VECCHIA RIGA
+const response = await fetch("/api/submit-form", { // NUOVA RIGA
+
     // ma l'invio effettivo per Netlify Forms deve andare al percorso del file HTML statico
     // che Netlify usa per il rilevamento, NON al nome del form stesso.
     // Il file che abbiamo creato è public/netlify-forms-declarations.html
