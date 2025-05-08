@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -16,10 +17,9 @@ const companyData = {
   domain: "http://binderecowatt.it/"
 };
 
-export default function ContattiPage() {
+export default function ContattiPage()  {
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header */}
       <header className="bg-green-700 text-white p-4 sticky top-0 z-50 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
           <Link href="/" legacyBehavior><a className="text-3xl font-bold">{companyData.name}</a></Link>
@@ -37,20 +37,32 @@ export default function ContattiPage() {
       </header>
 
       <main className="flex-grow container mx-auto px-4 py-8">
-        <section className="py-12">
-          <h1 className="text-4xl font-bold text-center text-green-700 mb-10">Contattaci</h1>
-          <p className="text-lg text-gray-700 mb-12 text-center max-w-3xl mx-auto">
-            Hai domande, desideri un sopralluogo tecnico o vuoi richiedere un preventivo gratuito e personalizzato? Il nostro team è a tua completa disposizione. Compila il modulo sottostante o utilizza i nostri recapiti diretti.
-          </p>
+        <section className="relative py-16 text-center bg-gray-100 rounded-lg shadow-lg overflow-hidden">
+          <Image src="/images/iot_internet_of_things.jpeg" alt="Contattaci per soluzioni energetiche intelligenti" layout="fill" objectFit="cover" quality={75} className="opacity-50" />
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold text-green-700 mb-10">Contattaci</h1>
+            <p className="text-lg text-gray-800 mb-12 max-w-3xl mx-auto">
+              Hai domande, desideri un sopralluogo tecnico o vuoi richiedere un preventivo gratuito e personalizzato? Il nostro team è a tua completa disposizione. Compila il modulo sottostante o utilizza i nostri recapiti diretti.
+            </p>
+          </div>
         </section>
 
-        <section className="py-10 bg-gray-50 rounded-lg shadow-lg">
+        <section className="py-10 bg-gray-50 rounded-lg shadow-lg mt-12">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-10 items-start">
-              {/* Modulo di Contatto */}
               <div className="bg-white p-8 rounded-lg shadow-md">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-6">Invia un Messaggio</h2>
-                <form action="#" method="POST" className="space-y-6">
+                {/* Modulo di Contatto aggiornato per Netlify Forms */}
+                <form name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field" className="space-y-6" action="/success">
+                  {/* Campo nascosto per Netlify Forms per il nome del form */}
+                  <input type="hidden" name="form-name" value="contact" />
+                  {/* Campo Honeypot per Netlify Forms per prevenire spam */}
+                  <p className="hidden">
+                    <label>
+                      Non compilare questo campo se sei umano: <input name="bot-field" />
+                    </label>
+                  </p>
+                  
                   <div>
                     <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700">Nome e Cognome*</label>
                     <input type="text" name="contact-name" id="contact-name" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" />
@@ -83,7 +95,6 @@ export default function ContattiPage() {
                 </form>
               </div>
 
-              {/* Recapiti Aziendali e Mappa */}
               <div className="space-y-8">
                 <div className="bg-white p-8 rounded-lg shadow-md">
                   <h2 className="text-2xl font-semibold text-gray-800 mb-4">I Nostri Recapiti</h2>
@@ -101,10 +112,8 @@ export default function ContattiPage() {
                 </div>
                 <div className="bg-white p-8 rounded-lg shadow-md">
                   <h2 className="text-2xl font-semibold text-gray-800 mb-4">Dove Trovarci</h2>
-                  {/* Placeholder per Google Maps Embed */}
-                  <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">
-                    Mappa Google Maps Integrata Qui
-                    {/* Esempio: <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2807.38..." width="100%" height="100%" style={{border:0}} allowfullscreen="" loading="lazy"></iframe> */}
+                  <div className="relative w-full h-64 rounded-lg overflow-hidden shadow-md">
+                    <Image src="/images/services_solar_panels.jpeg" alt="Mappa indicativa della nostra sede" layout="fill" objectFit="cover" />
                   </div>
                 </div>
               </div>
@@ -114,7 +123,6 @@ export default function ContattiPage() {
 
       </main>
 
-      {/* Footer */}
       <footer className="bg-gray-800 text-white py-8 text-center">
         <div className="container mx-auto">
           <p>&copy; {new Date().getFullYear()} {companyData.companyName} - P.IVA {companyData.vatNumber}</p>
@@ -122,9 +130,9 @@ export default function ContattiPage() {
           <p>Email: <a href={`mailto:${companyData.email}`} className="hover:text-green-300">{companyData.email}</a> | Tel: <a href={`tel:${companyData.phone}`} className="hover:text-green-300">{companyData.phone}</a></p>
           <p><Link href="/privacy-policy" legacyBehavior><a className="hover:text-green-300">Privacy Policy</a></Link> | <Link href="/cookie-policy" legacyBehavior><a className="hover:text-green-300">Cookie Policy</a></Link></p>
           <p>Sito web: <a href={companyData.domain} target="_blank" rel="noopener noreferrer" className="hover:text-green-300">{companyData.domain}</a></p>
+          <p className="text-xs mt-4">Immagini da Pixabay e Freepik</p>
         </div>
       </footer>
     </div>
   );
 }
-
