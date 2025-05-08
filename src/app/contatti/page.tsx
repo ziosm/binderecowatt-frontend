@@ -1,11 +1,19 @@
+"use client"; // Necessario per usare useState e gestire eventi client-side
+
 import Link from 'next/link';
 import Image from 'next/image';
-import type { Metadata } from 'next';
+import type { Metadata } from 'next'; // Metadata può rimanere se la pagina ha anche contenuto statico
+import { useState } from 'react'; // Importa useState
 
+// Se vuoi che il titolo e la descrizione siano dinamici o gestiti a livello di layout, 
+// altrimenti per pagine client-side pure potresti non aver bisogno di esportare Metadata qui.
+// Per ora lo lasciamo, Next.js è abbastanza flessibile.
+/*
 export const metadata: Metadata = {
   title: 'Contatti - BinderEcowatt',
   description: 'Contatta BinderEcowatt (Elettro Impianti srl) per informazioni, sopralluoghi o preventivi gratuiti per impianti fotovoltaici e sistemi IoT.',
 };
+*/
 
 const companyData = {
   name: "BinderEcowatt",
@@ -18,6 +26,46 @@ const companyData = {
 };
 
 export default function ContattiPage()  {
+  const [submissionStatus, setSubmissionStatus] = useState<string | null>(null);
+
+  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmissionStatus('invio');
+    const formData = new FormData(event.currentTarget);
+
+    // Importante: l'action del form nel JSX punterà a questo script,
+    // ma l'invio effettivo per Netlify Forms deve andare al percorso del file HTML statico
+    // che Netlify usa per il rilevamento, NON al nome del form stesso.
+    // Il file che abbiamo creato è public/netlify-forms-declarations.html
+    // quindi il target del fetch sarà "/netlify-forms-declarations.html"
+
+    try {
+      const response = await fetch("/netlify-forms-declarations.html", { // Punta al file HTML statico
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(formData as any).toString(),
+      });
+
+      if (response.ok) {
+        setSubmissionStatus('success');
+        (event.target as HTMLFormElement).reset(); // Resetta il form dopo l'invio
+        // Potresti reindirizzare a una pagina di successo qui se preferisci
+        // window.location.href = '/success'; 
+      } else {
+        // Anche se la risposta non è ok, Netlify potrebbe aver comunque processato il form.
+        // La gestione degli errori qui è più per problemi di rete o configurazioni errate gravi.
+        // Netlify di solito gestisce gli errori di validazione del form da solo.
+        console.error("Errore nell'invio del form, risposta non OK", response);
+        const responseText = await response.text();
+        console.error("Testo della risposta d'errore:", responseText);
+        setSubmissionStatus('error');
+      }
+    } catch (error) {
+      console.error("Errore durante il fetch del form:", error);
+      setSubmissionStatus('error');
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="bg-green-700 text-white p-4 sticky top-0 z-50 shadow-md">
@@ -52,17 +100,16 @@ export default function ContattiPage()  {
             <div className="grid md:grid-cols-2 gap-10 items-start">
               <div className="bg-white p-8 rounded-lg shadow-md">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-6">Invia un Messaggio</h2>
-                {/* Modulo di Contatto aggiornato per Netlify Forms */}
-                <form name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field" className="space-y-6" action="/success">
-                  {/* Campo nascosto per Netlify Forms per il nome del form */}
+                {/* Modulo di Contatto aggiornato per invio tramite JS */}
+                {/* Il name="contact" qui è per coerenza, ma Netlify usa quello nel file HTML statico */}
+                <form name="contact" onSubmit={handleFormSubmit} className="space-y-6">
+                  {/* Campo nascosto per il nome del form, richiesto da Netlify Forms se non usi data-netlify="true" qui */}
+                  {/* Ma dato che inviamo a un endpoint statico che ha già il form definito, questo potrebbe non essere strettamente necessario qui,
+                      tuttavia, includerlo per sicurezza non fa male. */}
                   <input type="hidden" name="form-name" value="contact" />
-                  {/* Campo Honeypot per Netlify Forms per prevenire spam */}
-                  <p className="hidden">
-                    <label>
-                      Non compilare questo campo se sei umano: <input name="bot-field" />
-                    </label>
-                  </p>
-                  
+                  {/* Non serve più data-netlify="true" o data-netlify-honeypot qui perché gestito dal file statico e JS */}
+                  {/* Non serve più l'honeypot qui nel JSX se il file statico lo dichiara */}
+
                   <div>
                     <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700">Nome e Cognome*</label>
                     <input type="text" name="contact-name" id="contact-name" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" />
@@ -88,10 +135,16 @@ export default function ContattiPage()  {
                     <label htmlFor="privacy" className="ml-2 text-sm text-gray-600">Ho letto e accetto l'<Link href="/privacy-policy" legacyBehavior><a className="underline hover:text-green-700">informativa sulla privacy</a></Link>*</label>
                   </div>
                   <div>
-                    <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md transition duration-300">
-                      Invia Messaggio
+                    <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md transition duration-300" disabled={submissionStatus === 'invio'}>
+                      {submissionStatus === 'invio' ? 'Invio in corso...' : 'Invia Messaggio'}
                     </button>
                   </div>
+                  {submissionStatus === 'success' && (
+                    <p className="text-green-600 font-semibold">Messaggio inviato con successo! Grazie.</p>
+                  )}
+                  {submissionStatus === 'error' && (
+                    <p className="text-red-600 font-semibold">Si è verificato un errore. Riprova più tardi.</p>
+                  )}
                 </form>
               </div>
 
