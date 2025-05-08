@@ -1,19 +1,8 @@
-"use client"; // Necessario per usare useState e gestire eventi client-side
+"use client";
 
 import Link from 'next/link';
 import Image from 'next/image';
-import type { Metadata } from 'next'; // Metadata può rimanere se la pagina ha anche contenuto statico
-import { useState } from 'react'; // Importa useState
-
-// Se vuoi che il titolo e la descrizione siano dinamici o gestiti a livello di layout, 
-// altrimenti per pagine client-side pure potresti non aver bisogno di esportare Metadata qui.
-// Per ora lo lasciamo, Next.js è abbastanza flessibile.
-/*
-export const metadata: Metadata = {
-  title: 'Contatti - BinderEcowatt',
-  description: 'Contatta BinderEcowatt (Elettro Impianti srl) per informazioni, sopralluoghi o preventivi gratuiti per impianti fotovoltaici e sistemi IoT.',
-};
-*/
+import { useState } from 'react';
 
 const companyData = {
   name: "BinderEcowatt",
@@ -26,45 +15,38 @@ const companyData = {
 };
 
 export default function ContattiPage()  {
-  const [submissionStatus, setSubmissionStatus] = useState<string | null>(null);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
+  const [submitMessage, setSubmitMessage] = useState('');
 
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmissionStatus('invio');
+    setSubmitStatus('pending');
+    setSubmitMessage('');
+
     const formData = new FormData(event.currentTarget);
-
-    // const response = await fetch("/netlify-forms-declarations.html", { // VECCHIA RIGA
-const response = await fetch("/api/submit-form", { // NUOVA RIGA
-
-    // ma l'invio effettivo per Netlify Forms deve andare al percorso del file HTML statico
-    // che Netlify usa per il rilevamento, NON al nome del form stesso.
-    // Il file che abbiamo creato è public/netlify-forms-declarations.html
-    // quindi il target del fetch sarà "/netlify-forms-declarations.html"
+    const body = new URLSearchParams(formData as any).toString();
 
     try {
-      const response = await fetch("/netlify-forms-declarations.html", { // Punta al file HTML statico
+      const response = await fetch("/api/submit-form", { // Punta alla nuova API route
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(formData as any).toString(),
+        body,
       });
 
       if (response.ok) {
-        setSubmissionStatus('success');
-        (event.target as HTMLFormElement).reset(); // Resetta il form dopo l'invio
-        // Potresti reindirizzare a una pagina di successo qui se preferisci
-        // window.location.href = '/success'; 
+        setSubmitStatus('success');
+        setSubmitMessage('Messaggio inviato con successo! Grazie.');
+        (event.target as HTMLFormElement).reset();
       } else {
-        // Anche se la risposta non è ok, Netlify potrebbe aver comunque processato il form.
-        // La gestione degli errori qui è più per problemi di rete o configurazioni errate gravi.
-        // Netlify di solito gestisce gli errori di validazione del form da solo.
-        console.error("Errore nell'invio del form, risposta non OK", response);
-        const responseText = await response.text();
-        console.error("Testo della risposta d'errore:", responseText);
-        setSubmissionStatus('error');
+        const errorData = await response.json().catch(() => ({ message: "Errore sconosciuto dal server." }));
+        console.error("Errore invio form (risposta API non OK):", response.status, errorData);
+        setSubmitStatus('error');
+        setSubmitMessage(`Si è verificato un errore: ${errorData.message || response.statusText}. Riprova più tardi.`);
       }
     } catch (error) {
-      console.error("Errore durante il fetch del form:", error);
-      setSubmissionStatus('error');
+      console.error("Errore invio form (catch globale):", error);
+      setSubmitStatus('error');
+      setSubmitMessage('Si è verificato un errore di rete o di configurazione. Riprova più tardi.');
     }
   };
 
@@ -77,97 +59,112 @@ const response = await fetch("/api/submit-form", { // NUOVA RIGA
             <Link href="/" legacyBehavior><a className="px-3 hover:text-green-300">Home</a></Link>
             <Link href="/impianti-fotovoltaici" legacyBehavior><a className="px-3 hover:text-green-300">Impianti Fotovoltaici</a></Link>
             <Link href="/sistemi-iot" legacyBehavior><a className="px-3 hover:text-green-300">Sistemi IoT</a></Link>
-            <Link href="/mappa-preventivi" legacyBehavior><a className="px-3 hover:text-green-300">Mappa Preventivi</a></Link>
             <Link href="/manutenzione" legacyBehavior><a className="px-3 hover:text-green-300">Manutenzione</a></Link>
             <Link href="/chi-siamo" legacyBehavior><a className="px-3 hover:text-green-300">Chi Siamo</a></Link>
             <Link href="/blog" legacyBehavior><a className="px-3 hover:text-green-300">Blog</a></Link>
             <Link href="/contatti" legacyBehavior><a className="px-3 hover:text-green-300 font-semibold">Contatti</a></Link>
+            <Link href="/mappa-preventivi" legacyBehavior><a className="px-3 hover:text-green-300">Mappa Preventivi</a></Link>
           </nav>
         </div>
       </header>
 
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <section className="relative py-16 text-center bg-gray-100 rounded-lg shadow-lg overflow-hidden">
-          <Image src="/images/iot_internet_of_things.jpeg" alt="Contattaci per soluzioni energetiche intelligenti" layout="fill" objectFit="cover" quality={75} className="opacity-50" />
-          <div className="relative z-10">
-            <h1 className="text-4xl font-bold text-green-700 mb-10">Contattaci</h1>
-            <p className="text-lg text-gray-800 mb-12 max-w-3xl mx-auto">
-              Hai domande, desideri un sopralluogo tecnico o vuoi richiedere un preventivo gratuito e personalizzato? Il nostro team è a tua completa disposizione. Compila il modulo sottostante o utilizza i nostri recapiti diretti.
-            </p>
+      <main className="flex-grow bg-gray-50">
+        <section className="relative bg-green-600 text-white py-20">
+          <div className="absolute inset-0">
+            <Image
+              src="/images/iot_internet_of_things.jpeg"
+              alt="Contattaci per soluzioni energetiche"
+              layout="fill"
+              objectFit="cover"
+              quality={70}
+              className="opacity-30"
+            />
+          </div>
+          <div className="container mx-auto text-center relative z-10">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Mettiti in Contatto</h1>
+            <p className="text-lg md:text-xl mb-8">Siamo qui per rispondere a tutte le tue domande e aiutarti a trovare la soluzione migliore.</p>
           </div>
         </section>
 
-        <section className="py-10 bg-gray-50 rounded-lg shadow-lg mt-12">
+        <section className="py-16">
           <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-2 gap-10 items-start">
-              <div className="bg-white p-8 rounded-lg shadow-md">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-6">Invia un Messaggio</h2>
-                {/* Modulo di Contatto aggiornato per invio tramite JS */}
-                {/* Il name="contact" qui è per coerenza, ma Netlify usa quello nel file HTML statico */}
-                <form name="contact" onSubmit={handleFormSubmit} className="space-y-6">
-                  {/* Campo nascosto per il nome del form, richiesto da Netlify Forms se non usi data-netlify="true" qui */}
-                  {/* Ma dato che inviamo a un endpoint statico che ha già il form definito, questo potrebbe non essere strettamente necessario qui,
-                      tuttavia, includerlo per sicurezza non fa male. */}
+            <div className="grid md:grid-cols-2 gap-12 items-start">
+              <div className="bg-white p-8 rounded-lg shadow-xl">
+                <h2 className="text-3xl font-semibold text-gray-800 mb-6">Inviaci un Messaggio</h2>
+                <form
+                  name="contact" 
+                  onSubmit={handleFormSubmit}
+                  data-netlify="true" 
+                  data-netlify-honeypot="bot-field"
+                >
                   <input type="hidden" name="form-name" value="contact" />
-                  {/* Non serve più data-netlify="true" o data-netlify-honeypot qui perché gestito dal file statico e JS */}
-                  {/* Non serve più l'honeypot qui nel JSX se il file statico lo dichiara */}
-
-                  <div>
-                    <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700">Nome e Cognome*</label>
-                    <input type="text" name="contact-name" id="contact-name" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" />
+                  <p className="hidden">
+                    <label>
+                      Non compilare questo campo se sei umano: <input name="bot-field" />
+                    </label>
+                  </p>
+                  <div className="mb-4">
+                    <label htmlFor="contact-name" className="block text-gray-700 font-medium mb-2">Nome Completo*</label>
+                    <input type="text" id="contact-name" name="contact-name" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label htmlFor="contact-email" className="block text-gray-700 font-medium mb-2">Email*</label>
+                      <input type="email" id="contact-email" name="contact-email" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
+                    </div>
+                    <div>
+                      <label htmlFor="contact-phone" className="block text-gray-700 font-medium mb-2">Telefono</label>
+                      <input type="tel" id="contact-phone" name="contact-phone" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="contact-subject" className="block text-gray-700 font-medium mb-2">Oggetto*</label>
+                    <input type="text" id="contact-subject" name="contact-subject" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="contact-message" className="block text-gray-700 font-medium mb-2">Messaggio*</label>
+                    <textarea id="contact-message" name="contact-message" rows={5} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"></textarea>
+                  </div>
+                  <div className="mb-6">
+                    <label htmlFor="privacy" className="flex items-center text-gray-700">
+                      <input type="checkbox" id="privacy" name="privacy" required className="mr-2 h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500" />
+                      <span>Ho letto e accetto l'<Link href="/privacy-policy" legacyBehavior><a className="text-green-600 hover:underline">informativa sulla privacy</a></Link>*</span>
+                    </label>
                   </div>
                   <div>
-                    <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700">Email*</label>
-                    <input type="email" name="contact-email" id="contact-email" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" />
-                  </div>
-                  <div>
-                    <label htmlFor="contact-phone" className="block text-sm font-medium text-gray-700">Telefono</label>
-                    <input type="tel" name="contact-phone" id="contact-phone" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" />
-                  </div>
-                  <div>
-                    <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-700">Oggetto</label>
-                    <input type="text" name="contact-subject" id="contact-subject" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" />
-                  </div>
-                  <div>
-                    <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700">Messaggio*</label>
-                    <textarea name="contact-message" id="contact-message" rows={5} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"></textarea>
-                  </div>
-                  <div>
-                    <input type="checkbox" name="privacy" id="privacy" required className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500" />
-                    <label htmlFor="privacy" className="ml-2 text-sm text-gray-600">Ho letto e accetto l'<Link href="/privacy-policy" legacyBehavior><a className="underline hover:text-green-700">informativa sulla privacy</a></Link>*</label>
-                  </div>
-                  <div>
-                    <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md transition duration-300" disabled={submissionStatus === 'invio'}>
-                      {submissionStatus === 'invio' ? 'Invio in corso...' : 'Invia Messaggio'}
+                    <button
+                      type="submit"
+                      disabled={submitStatus === 'pending'}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 disabled:opacity-50"
+                    >
+                      {submitStatus === 'pending' ? 'Invio in corso...' : 'Invia Messaggio'}
                     </button>
                   </div>
-                  {submissionStatus === 'success' && (
-                    <p className="text-green-600 font-semibold">Messaggio inviato con successo! Grazie.</p>
-                  )}
-                  {submissionStatus === 'error' && (
-                    <p className="text-red-600 font-semibold">Si è verificato un errore. Riprova più tardi.</p>
+                  {submitMessage && (
+                    <p className={`mt-4 text-sm ${submitStatus === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                      {submitMessage}
+                    </p>
                   )}
                 </form>
               </div>
 
               <div className="space-y-8">
-                <div className="bg-white p-8 rounded-lg shadow-md">
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-4">I Nostri Recapiti</h2>
-                  <p className="text-gray-700 mb-2"><strong>{companyData.companyName}</strong></p>
-                  <p className="text-gray-700 mb-2">{companyData.address}</p>
-                  <p className="text-gray-700 mb-2">
-                    <strong>Email:</strong> <a href={`mailto:${companyData.email}`} className="text-green-600 hover:underline">{companyData.email}</a>
-                  </p>
-                  <p className="text-gray-700 mb-2">
-                    <strong>Telefono:</strong> <a href={`tel:${companyData.phone}`} className="text-green-600 hover:underline">{companyData.phone}</a>
-                  </p>
-                  <p className="text-gray-700">
-                    <strong>P.IVA:</strong> {companyData.vatNumber}
-                  </p>
+                <div className="bg-white p-8 rounded-lg shadow-xl">
+                  <h3 className="text-2xl font-semibold text-gray-800 mb-4">Informazioni di Contatto</h3>
+                  <p className="text-gray-600 mb-2"><strong>Indirizzo:</strong> {companyData.address}</p>
+                  <p className="text-gray-600 mb-2"><strong>Email:</strong> <a href={`mailto:${companyData.email}`} className="text-green-600 hover:underline">{companyData.email}</a></p>
+                  <p className="text-gray-600 mb-4"><strong>Telefono:</strong> <a href={`tel:${companyData.phone}`} className="text-green-600 hover:underline">{companyData.phone}</a></p>
+                  <p className="text-gray-600">Siamo disponibili per sopralluoghi e consulenze. Non esitare a contattarci!</p>
                 </div>
-                <div className="bg-white p-8 rounded-lg shadow-md">
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-4">Dove Trovarci</h2>
-                  <div className="relative w-full h-64 rounded-lg overflow-hidden shadow-md">
+                <div className="bg-white p-8 rounded-lg shadow-xl">
+                  <h3 className="text-2xl font-semibold text-gray-800 mb-4">Orari di Apertura</h3>
+                  <p className="text-gray-600">Lunedì - Venerdì: 09:00 - 18:00</p>
+                  <p className="text-gray-600">Sabato: 09:00 - 13:00 (solo su appuntamento)</p>
+                  <p className="text-gray-600">Domenica: Chiuso</p>
+                </div>
+                <div className="bg-white p-8 rounded-lg shadow-xl h-64 relative overflow-hidden">
+                   <h3 className="text-2xl font-semibold text-gray-800 mb-4">Dove Trovarci</h3>
+                   <div className="absolute inset-0">
                     <Image src="/images/services_solar_panels.jpeg" alt="Mappa indicativa della nostra sede" layout="fill" objectFit="cover" />
                   </div>
                 </div>
@@ -175,7 +172,6 @@ const response = await fetch("/api/submit-form", { // NUOVA RIGA
             </div>
           </div>
         </section>
-
       </main>
 
       <footer className="bg-gray-800 text-white py-8 text-center">
