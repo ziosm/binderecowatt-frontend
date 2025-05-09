@@ -1,8 +1,11 @@
 "use client";
 
 import Link from 'next/link';
-import Image from 'next/image';
+import Image from 'next/image'; // Aggiunto Image per l'header e il footer se necessario
 import { useEffect, useRef, useState } from 'react';
+
+// Non è possibile esportare metadata da un Client Component.
+// Se hai bisogno di metadata, dovresti averli nel file layout.tsx o in un Server Component genitore.
 
 const companyData = {
   name: "BinderEcowatt",
