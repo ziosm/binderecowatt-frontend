@@ -1,13 +1,11 @@
 "use client";
 
 import Link from 'next/link';
-import type { Metadata } from 'next';
-import { useEffect, useRef, useState } from 'react'; // Import per interattività client-side
+import Image from 'next/image'; // Aggiunto Image per l'header e il footer se necessario
+import { useEffect, useRef, useState } from 'react';
 
-// export const metadata: Metadata = { // metadata export is not allowed in client components
-//   title: 'Mappa Preventivi Impianti Fotovoltaici - BinderEcowatt',
-//   description: 'Seleziona la tua regione sulla mappa interattiva e richiedi un preventivo gratuito per il tuo impianto fotovoltaico o sistema IoT.',
-// };
+// Non è possibile esportare metadata da un Client Component.
+// Se hai bisogno di metadata, dovresti averli nel file layout.tsx o in un Server Component genitore.
 
 const companyData = {
   name: "BinderEcowatt",
@@ -19,70 +17,127 @@ const companyData = {
   domain: "http://binderecowatt.it/"
 };
 
-// Componente per la mappa SVG interattiva (da spostare in /components se complessa)
-const InteractiveMap = () => {
+const InteractiveMap = ()  => {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [mapSvg, setMapSvg] = useState<string | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
+  const [submitStatus, setSubmitStatus] = useState<
+    'idle' | 'pending' | 'success' | 'error'
+  >('idle');
+  const [submitMessage, setSubmitMessage] = useState('');
+
   useEffect(() => {
-    // Carica l'SVG della mappa d'Italia
-    // In un'app reale, questo SVG potrebbe essere importato direttamente o gestito diversamente
-    fetch('/mappa_italia_regioni.svg') // Assumendo che l'SVG sia nella cartella public
+    fetch('/mappa_italia_regioni.svg')
       .then(response => response.text())
-      .then(data => {
-        setMapSvg(data);
-      })
+      .then(data => setMapSvg(data))
       .catch(error => console.error('Errore caricamento mappa SVG:', error));
   }, []);
 
   useEffect(() => {
     if (mapSvg && mapContainerRef.current) {
-        const svgElement = mapContainerRef.current.querySelector('svg');
-        if (svgElement) {
-            svgElement.setAttribute('class', 'w-full h-auto stroke-white stroke-1');
-            const paths = svgElement.querySelectorAll('path');
-            paths.forEach(path => {
-                path.setAttribute('class', 'fill-green-500 hover:fill-green-700 transition-colors duration-200 cursor-pointer');
-                const regionName = path.getAttribute('name') || path.id;
-                path.addEventListener('click', () => {
-                    setSelectedRegion(regionName);
-                    // Qui si aprirebbe il form o si navigherebbe alla pagina di preventivo per la regione
-                    // alert(`Regione selezionata: ${regionName}. Aprire form preventivo.`);
-                });
-            });
-        }
+      const svgElement = mapContainerRef.current.querySelector('svg');
+      if (svgElement) {
+        svgElement.setAttribute('class', 'w-full h-auto stroke-white stroke-1');
+        const paths = svgElement.querySelectorAll('path');
+        paths.forEach(path => {
+          path.setAttribute('class', 'fill-green-500 hover:fill-green-700 transition-colors duration-200 cursor-pointer');
+          const regionName = path.getAttribute('name') || path.id;
+          path.addEventListener('click', () => {
+            setSelectedRegion(regionName);
+            setSubmitStatus('idle');
+            setSubmitMessage('');
+          });
+        });
+      }
     }
   }, [mapSvg]);
+
+  const handlePreventivoSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitStatus('pending');
+    setSubmitMessage('');
+
+    if (!selectedRegion) {
+      setSubmitStatus('error');
+      setSubmitMessage('Errore: Regione non selezionata.');
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+    formData.append('regione', selectedRegion);
+
+    try {
+      const response = await fetch("/api/submit-preventivo", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setSubmitMessage('Richiesta di preventivo inviata con successo! Grazie.');
+        (event.target as HTMLFormElement).reset();
+      } else {
+        let errorMessage = `Errore ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (typeof errorData === 'object' && errorData !== null && typeof (errorData as any).error === 'string') {
+            errorMessage = (errorData as any).error;
+          } else if (typeof errorData === 'object' && errorData !== null && typeof (errorData as any).message === 'string') {
+            errorMessage = (errorData as any).message;
+          }
+          console.error("Errore invio preventivo (risposta API non OK):", response.status, errorData);
+        } catch (jsonError) {
+          console.error("Errore nel parsing JSON della risposta di errore preventivo:", jsonError);
+          const textError = await response.text();
+          errorMessage = textError || `Errore ${response.status}`;
+        }
+        setSubmitStatus('error');
+        setSubmitMessage(`Si è verificato un errore: ${errorMessage}. Riprova più tardi.`);
+      }
+    } catch (error) {
+      console.error("Errore invio preventivo (catch globale):", error);
+      setSubmitStatus('error');
+      setSubmitMessage('Si è verificato un errore di rete o di configurazione. Riprova più tardi.');
+    }
+  };
 
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div ref={mapContainerRef} dangerouslySetInnerHTML={{ __html: mapSvg || '<p>Caricamento mappa...</p>' }} />
       {selectedRegion && (
-        <div className="mt-6 p-4 bg-yellow-100 border border-yellow-400 rounded-lg text-center">
-          <h3 className="text-xl font-semibold text-yellow-800">Preventivo per la regione: {selectedRegion}</h3>
-          <p className="text-yellow-700 mt-2">Compila il form sottostante per ricevere un preventivo personalizzato.</p>
-          {/* Qui andrebbe il Form di richiesta preventivo, che potrebbe essere un componente separato */}
-          <form className="mt-4 space-y-4">
+        <div className="mt-6 p-6 bg-white border border-gray-200 rounded-lg shadow-lg text-center">
+          <h3 className="text-2xl font-semibold text-gray-800 mb-3">Preventivo per la regione: {selectedRegion}</h3>
+          <p className="text-gray-600 mt-2 mb-4">Compila il form sottostante per ricevere un preventivo personalizzato.</p>
+          <form className="mt-4 space-y-4" onSubmit={handlePreventivoSubmit}>
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nome e Cognome</label>
-              <input type="text" name="name" id="name" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" />
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 text-left">Nome e Cognome*</label>
+              <input type="text" name="name" id="name" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-              <input type="email" name="email" id="email" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" />
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 text-left">Email*</label>
+              <input type="email" name="email" id="email" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" />
             </div>
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Telefono</label>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 text-left">Telefono</label>
               <input type="tel" name="phone" id="phone" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm" />
             </div>
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700">Dettagli Richiesta</label>
-              <textarea name="message" id="message" rows={4} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"></textarea>
+              <label htmlFor="message" className="block text-sm font-medium text-gray-700 text-left">Dettagli Richiesta*</label>
+              <textarea name="message" id="message" rows={4} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"></textarea>
             </div>
-            <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
-              Invia Richiesta Preventivo
+            <button 
+              type="submit" 
+              disabled={submitStatus === 'pending'}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md transition duration-300 disabled:opacity-50"
+            >
+              {submitStatus === 'pending' ? 'Invio in corso...' : 'Invia Richiesta Preventivo'}
             </button>
+            {submitMessage && (
+              <p className={`mt-4 text-sm ${submitStatus === 'success' ? 'text-green-700' : 'text-red-600'}`}>
+                {submitMessage}
+              </p>
+            )}
           </form>
         </div>
       )}
@@ -96,12 +151,8 @@ const InteractiveMap = () => {
 };
 
 export default function MappaPreventiviPage() {
-  // Copia il file SVG in public/mappa_italia_regioni.svg per farlo funzionare
-  // Eseguire: cp /home/ubuntu/mappa_italia_regioni.svg /home/ubuntu/binderecowatt_frontend/public/
-
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header */}
       <header className="bg-green-700 text-white p-4 sticky top-0 z-50 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
           <Link href="/" legacyBehavior><a className="text-3xl font-bold">{companyData.name}</a></Link>
@@ -141,10 +192,8 @@ export default function MappaPreventiviPage() {
                 <p className="mt-4">Il nostro team è a tua disposizione per analizzare le tue necessità e proporti la migliore soluzione per un futuro energetico più efficiente e sostenibile.</p>
             </div>
         </section>
-
       </main>
 
-      {/* Footer */}
       <footer className="bg-gray-800 text-white py-8 text-center">
         <div className="container mx-auto">
           <p>&copy; {new Date().getFullYear()} {companyData.companyName} - P.IVA {companyData.vatNumber}</p>
@@ -157,4 +206,3 @@ export default function MappaPreventiviPage() {
     </div>
   );
 }
-
