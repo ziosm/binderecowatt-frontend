@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
+// Definiamo un'interfaccia per la struttura del corpo della richiesta
+interface ContactFormRequestBody {
+  nome: string;
+  email: string;
+  telefono?: string; // Il telefono è opzionale
+  oggetto: string;
+  messaggio: string;
+}
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    // Ora diciamo a TypeScript che ci aspettiamo un corpo di tipo ContactFormRequestBody
+    const body = await request.json() as ContactFormRequestBody;
     const { nome, email, telefono, oggetto, messaggio } = body;
 
     // Input validation (basic)
@@ -12,19 +22,18 @@ export async function POST(request: Request) {
     }
 
     // Configura il transporter di Nodemailer
-    // Le credenziali verranno prese dalle variabili d'ambiente
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.GMAIL_USER, // Il tuo indirizzo binderecowatt@gmail.com
-        pass: process.env.GMAIL_APP_PASSWORD, // La tua password per app di Gmail
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
       },
     });
 
     const mailOptions = {
       from: `"Modulo Contatti Sito" <${process.env.GMAIL_USER}>`,
-      to: process.env.GMAIL_USER, // Invia a binderecowatt@gmail.com
-      replyTo: email, // Permette di rispondere direttamente all'utente
+      to: process.env.GMAIL_USER,
+      replyTo: email,
       subject: `Nuovo Messaggio dal Sito: ${oggetto}`,
       html: `
         <h1>Nuovo Messaggio dal Modulo Contatti</h1>
