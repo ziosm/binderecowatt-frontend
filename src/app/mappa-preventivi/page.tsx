@@ -1,11 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import Image from 'next/image'; // Aggiunto Image per l'header e il footer se necessario
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-
-// Non è possibile esportare metadata da un Client Component.
-// Se hai bisogno di metadata, dovresti averli nel file layout.tsx o in un Server Component genitore.
 
 const companyData = {
   name: "BinderEcowatt",
@@ -78,19 +75,23 @@ const InteractiveMap = ()  => {
         setSubmitMessage('Richiesta di preventivo inviata con successo! Grazie.');
         (event.target as HTMLFormElement).reset();
       } else {
-        let errorMessage = `Errore ${response.status}`;
+        // Gestione corretta della risposta di errore
+        let errorMessage = `Errore server: ${response.status}`;
+        const responseText = await response.text(); // Leggi il corpo come testo UNA SOLA VOLTA
         try {
-          const errorData = await response.json();
-          if (typeof errorData === 'object' && errorData !== null && typeof (errorData as any).error === 'string') {
-            errorMessage = (errorData as any).error;
-          } else if (typeof errorData === 'object' && errorData !== null && typeof (errorData as any).message === 'string') {
-            errorMessage = (errorData as any).message;
+          const errorData = JSON.parse(responseText); // Prova a fare il parsing del testo come JSON
+          if (typeof errorData === 'object' && errorData !== null) {
+            if (typeof (errorData as any).error === 'string') {
+              errorMessage = (errorData as any).error;
+            } else if (typeof (errorData as any).message === 'string') {
+              errorMessage = (errorData as any).message;
+            }
           }
-          console.error("Errore invio preventivo (risposta API non OK):", response.status, errorData);
-        } catch (jsonError) {
-          console.error("Errore nel parsing JSON della risposta di errore preventivo:", jsonError);
-          const textError = await response.text();
-          errorMessage = textError || `Errore ${response.status}`;
+          console.error("Errore invio preventivo (risposta API non OK - JSON estratto):", response.status, errorData);
+        } catch (jsonParseError) {
+          // Se il parsing JSON fallisce, usa il testo della risposta se disponibile, o lo status
+          errorMessage = responseText || `Errore ${response.status} - Risposta non JSON.`;
+          console.error("Errore invio preventivo (risposta API non OK - Testo grezzo):", response.status, responseText);
         }
         setSubmitStatus('error');
         setSubmitMessage(`Si è verificato un errore: ${errorMessage}. Riprova più tardi.`);
