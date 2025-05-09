@@ -54,7 +54,7 @@
     "lucide-react": "^0.508.0",
     "next": "15.1.4",
     "next-themes": "^0.4.4",
-    "nodemailer": "^6.9.13", // <-- AGGIUNTO NODEMAILER
+    "nodemailer": "^6.9.13",
     "react": "^18.2.0",
     "react-day-picker": "8.10.1",
     "react-dom": "^18.2.0",
@@ -69,9 +69,9 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240403.0",
-    "@netlify/plugin-nextjs": "^5.3.2", // Questo può rimanere, non fa danni su Vercel
+    "@netlify/plugin-nextjs": "^5.3.2",
     "@types/node": "^20",
-    "@types/nodemailer": "^6.4.14", // <-- AGGIUNTI TIPI PER NODEMAILER
+    "@types/nodemailer": "^6.4.14",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "eslint": "^8",
