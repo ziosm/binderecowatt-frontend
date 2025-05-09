@@ -14,7 +14,7 @@ const companyData = {
   domain: "http://binderecowatt.it/"
 };
 
-export default function ContattiPage()  {
+export default function ContattiPage()   {
   const [submitStatus, setSubmitStatus] = useState<
     'idle' | 'pending' | 'success' | 'error'
   >('idle');
@@ -26,13 +26,16 @@ export default function ContattiPage()  {
     setSubmitMessage('');
 
     const formData = new FormData(event.currentTarget);
-    const body = new URLSearchParams(formData as any).toString();
+    // Non è necessario convertire in URLSearchParams se la API route legge formData direttamente
+    // const body = new URLSearchParams(formData as any).toString(); 
 
     try {
-      const response = await fetch("/api/submit-form", { // Punta alla nuova API route
+      const response = await fetch("/api/submit-form", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body,
+        // Non impostare Content-Type quando si invia FormData con fetch;
+        // il browser lo imposterà automaticamente a multipart/form-data con il boundary corretto.
+        // headers: { "Content-Type": "application/x-www-form-urlencoded" }, 
+        body: formData, // Invia direttamente l'oggetto FormData
       });
 
       if (response.ok) {
@@ -40,17 +43,19 @@ export default function ContattiPage()  {
         setSubmitMessage('Messaggio inviato con successo! Grazie.');
         (event.target as HTMLFormElement).reset();
       } else {
-        let errorMessage = response.statusText; // Default a statusText
+        let errorMessage = `Errore ${response.status}`;
         try {
           const errorData = await response.json();
-          // Controlla se errorData è un oggetto e ha una proprietà message di tipo stringa
-          if (typeof errorData === 'object' && errorData !== null && typeof (errorData as any).message === 'string') {
+          if (typeof errorData === 'object' && errorData !== null && typeof (errorData as any).error === 'string') {
+            errorMessage = (errorData as any).error; // Usa il campo 'error' dalla risposta JSON
+          } else if (typeof errorData === 'object' && errorData !== null && typeof (errorData as any).message === 'string') {
             errorMessage = (errorData as any).message;
           }
           console.error("Errore invio form (risposta API non OK):", response.status, errorData);
         } catch (jsonError) {
-          // Se response.json() fallisce o non è JSON, usa statusText come fallback
           console.error("Errore nel parsing JSON della risposta di errore:", jsonError);
+          const textError = await response.text(); // Prova a leggere come testo se non è JSON
+          errorMessage = textError || `Errore ${response.status}`;
         }
         setSubmitStatus('error');
         setSubmitMessage(`Si è verificato un errore: ${errorMessage}. Riprova più tardi.`);
@@ -108,41 +113,42 @@ export default function ContattiPage()  {
                 <form
                   name="contact" 
                   onSubmit={handleFormSubmit}
-                  data-netlify="true" 
-                  data-netlify-honeypot="bot-field"
+                  // data-netlify="true" // Rimuovi se non usi Netlify Forms per questo specifico modulo
+                  // data-netlify-honeypot="bot-field" // Rimuovi se non usi Netlify Forms
                 >
+                  {/* Rimuovi se non usi Netlify Forms 
                   <input type="hidden" name="form-name" value="contact" />
                   <p className="hidden">
                     <label>
                       Non compilare questo campo se sei umano: <input name="bot-field" />
                     </label>
-                  </p>
+                  </p>*/}
                   <div className="mb-4">
-                    <label htmlFor="contact-name" className="block text-gray-700 font-medium mb-2">Nome Completo*</label>
-                    <input type="text" id="contact-name" name="contact-name" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
+                    <label htmlFor="nome" className="block text-gray-700 font-medium mb-2">Nome Completo*</label>
+                    <input type="text" id="nome" name="nome" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label htmlFor="contact-email" className="block text-gray-700 font-medium mb-2">Email*</label>
-                      <input type="email" id="contact-email" name="contact-email" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
+                      <label htmlFor="email" className="block text-gray-700 font-medium mb-2">Email*</label>
+                      <input type="email" id="email" name="email" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
                     </div>
                     <div>
-                      <label htmlFor="contact-phone" className="block text-gray-700 font-medium mb-2">Telefono</label>
-                      <input type="tel" id="contact-phone" name="contact-phone" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
+                      <label htmlFor="telefono" className="block text-gray-700 font-medium mb-2">Telefono</label>
+                      <input type="tel" id="telefono" name="telefono" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
                     </div>
                   </div>
                   <div className="mb-4">
-                    <label htmlFor="contact-subject" className="block text-gray-700 font-medium mb-2">Oggetto*</label>
-                    <input type="text" id="contact-subject" name="contact-subject" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
+                    <label htmlFor="oggetto" className="block text-gray-700 font-medium mb-2">Oggetto*</label>
+                    <input type="text" id="oggetto" name="oggetto" required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" />
                   </div>
                   <div className="mb-4">
-                    <label htmlFor="contact-message" className="block text-gray-700 font-medium mb-2">Messaggio*</label>
-                    <textarea id="contact-message" name="contact-message" rows={5} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"></textarea>
+                    <label htmlFor="messaggio" className="block text-gray-700 font-medium mb-2">Messaggio*</label>
+                    <textarea id="messaggio" name="messaggio" rows={5} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"></textarea>
                   </div>
                   <div className="mb-6">
                     <label htmlFor="privacy" className="flex items-center text-gray-700">
                       <input type="checkbox" id="privacy" name="privacy" required className="mr-2 h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500" />
-                      <span>Ho letto e accetto l'<Link href="/privacy-policy" legacyBehavior><a className="text-green-600 hover:underline">informativa sulla privacy</a></Link>*</span>
+                      <span>Ho letto e accetto l\'<Link href="/privacy-policy" legacyBehavior><a className="text-green-600 hover:underline">informativa sulla privacy</a></Link>*</span>
                     </label>
                   </div>
                   <div>
