@@ -1,20 +1,16 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
-// Definiamo un'interfaccia per la struttura del corpo della richiesta
-interface ContactFormRequestBody {
-  nome: string;
-  email: string;
-  telefono?: string; // Il telefono è opzionale
-  oggetto: string;
-  messaggio: string;
-}
-
 export async function POST(request: Request) {
   try {
-    // Ora diciamo a TypeScript che ci aspettiamo un corpo di tipo ContactFormRequestBody
-    const body = await request.json() as ContactFormRequestBody;
-    const { nome, email, telefono, oggetto, messaggio } = body;
+    const formData = await request.formData();
+    const nome = formData.get('nome') as string;
+    const email = formData.get('email') as string;
+    // Il campo telefono potrebbe non essere sempre presente, quindi gestiamo il caso in cui sia null o undefined
+    const telefonoValue = formData.get('telefono');
+    const telefono = telefonoValue ? String(telefonoValue) : undefined;
+    const oggetto = formData.get('oggetto') as string;
+    const messaggio = formData.get('messaggio') as string;
 
     // Input validation (basic)
     if (!nome || !email || !oggetto || !messaggio) {
@@ -32,8 +28,8 @@ export async function POST(request: Request) {
 
     const mailOptions = {
       from: `"Modulo Contatti Sito" <${process.env.GMAIL_USER}>`,
-      to: process.env.GMAIL_USER,
-      replyTo: email,
+      to: process.env.GMAIL_USER, // Invia all'indirizzo email specificato nelle variabili d'ambiente
+      replyTo: email, // Email del mittente per la risposta
       subject: `Nuovo Messaggio dal Sito: ${oggetto}`,
       html: `
         <h1>Nuovo Messaggio dal Modulo Contatti</h1>
@@ -51,7 +47,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Messaggio inviato con successo!' }, { status: 200 });
 
   } catch (error) {
-    console.error('Errore API:', error);
+    console.error('Errore API /api/submit-form:', error); // Log dell'errore più specifico
     let errorMessage = 'Si è verificato un errore durante l\'invio del messaggio.';
     if (error instanceof Error) {
       errorMessage = error.message;
