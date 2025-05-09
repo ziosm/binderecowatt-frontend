@@ -1,11 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import Image from 'next/image'; // Aggiunto Image per l'header e il footer se necessario
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-
-// Non è possibile esportare metadata da un Client Component.
-// Se hai bisogno di metadata, dovresti averli nel file layout.tsx o in un Server Component genitore.
 
 const companyData = {
   name: "BinderEcowatt",
@@ -78,11 +75,10 @@ const InteractiveMap = ()  => {
         setSubmitMessage('Richiesta di preventivo inviata con successo! Grazie.');
         (event.target as HTMLFormElement).reset();
       } else {
-        // Gestione corretta della risposta di errore
         let errorMessage = `Errore server: ${response.status}`;
-        const responseText = await response.text(); // Leggi il corpo come testo UNA SOLA VOLTA
+        const responseText = await response.text(); 
         try {
-          const errorData = JSON.parse(responseText); // Prova a fare il parsing del testo come JSON
+          const errorData = JSON.parse(responseText); 
           if (typeof errorData === 'object' && errorData !== null) {
             if (typeof (errorData as any).error === 'string') {
               errorMessage = (errorData as any).error;
@@ -92,7 +88,6 @@ const InteractiveMap = ()  => {
           }
           console.error("Errore invio preventivo (risposta API non OK - JSON estratto):", response.status, errorData);
         } catch (jsonParseError) {
-          // Se il parsing JSON fallisce, usa il testo della risposta se disponibile, o lo status
           errorMessage = responseText || `Errore ${response.status} - Risposta non JSON.`;
           console.error("Errore invio preventivo (risposta API non OK - Testo grezzo):", response.status, responseText);
         }
